@@ -1,0 +1,11 @@
+agno
+fastapi
+uvicorn[standard]
+python-dotenv
+groq
+openai
+ollama
+google-search-results
+beautifulsoup4
+requests
+pydantic

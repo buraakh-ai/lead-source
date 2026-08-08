@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AG FinTax · AI Lead Generation</title>
+<style>
+  :root {
+    --orange: #f26f2e;
+    --orange-dark: #e2571b;
+    --navy: #1e1e4b;
+    --navy-2: #2b2d6e;
+    --blue: #3b4fe0;
+    --purple: #9b3fd9;
+    --cyan: #2dd4d4;
+    --ink: #1f2540;
+    --muted: #6b7280;
+    --line: #e7e9f3;
+    --buraq: linear-gradient(120deg, #3b4fe0 0%, #9b3fd9 55%, #2dd4d4 100%);
+  }
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0; padding: 28px 18px 60px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(242,111,46,.18), transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, rgba(155,63,217,.20), transparent 55%),
+      linear-gradient(160deg, #171735 0%, #1e1e4b 45%, #22265c 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  /* faint financial icon layer over the gradient */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='2.2'%3E%3Cpolyline points='20,90 45,65 70,78 95,40'/%3E%3Cpath d='M95 40 l-11 2 M95 40 l-2 11'/%3E%3Crect x='150' y='60' width='10' height='30'/%3E%3Crect x='166' y='45' width='10' height='45'/%3E%3Crect x='182' y='72' width='10' height='18'/%3E%3Ccircle cx='60' cy='190' r='20'/%3E%3Ccircle cx='205' cy='195' r='16'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='0.05' font-family='Georgia, serif' font-weight='bold'%3E%3Ctext x='196' y='150' font-size='40'%3E%24%3C/text%3E%3Ctext x='18' y='150' font-size='30'%3E%25%3C/text%3E%3Ctext x='120' y='210' font-size='34'%3E%24%3C/text%3E%3Ctext x='52' y='200' font-size='20'%3E%C2%A2%3C/text%3E%3C/g%3E%3C/svg%3E");
+    background-size: 260px 260px;
+  }
+  .container { max-width: 940px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* ---------- Header / branding ---------- */
+  .brandbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .logo-card {
+    background: #fff; border-radius: 14px; padding: 10px 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25); display: flex; align-items: center; gap: 12px;
+  }
+  .logo-card img { height: 46px; width: auto; display: block; }
+  .powered { display: flex; align-items: center; gap: 10px; }
+  .powered .lbl { color: rgba(255,255,255,.75); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; text-align: right; }
+  .powered .logo-card img { height: 40px; border-radius: 8px; }
+
+  .hero { text-align: center; margin: 6px 0 22px; }
+  .hero h1 { color: #fff; font-size: 1.9rem; margin: 0 0 6px; letter-spacing: -.01em; }
+  .hero h1 .amp { background: var(--buraq); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: rgba(255,255,255,.78); margin: 0; font-size: .98rem; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    background: rgba(255,255,255,.97); border-radius: 16px; padding: 18px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.grow { flex: 1 1 300px; }
+  .field label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .field input { padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; font-size: .95rem; }
+  .field input:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(242,111,46,.18); }
+  .field.num input { width: 92px; }
+  button.run {
+    padding: 12px 26px; border: none; border-radius: 10px; cursor: pointer; color: #fff;
+    font-size: .96rem; font-weight: 700; letter-spacing: .01em;
+    background: linear-gradient(120deg, var(--orange), var(--orange-dark));
+    box-shadow: 0 8px 18px rgba(242,111,46,.35); transition: transform .1s ease, box-shadow .2s ease;
+  }
+  button.run:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(242,111,46,.45); }
+  button.run:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
+
+  /* ---------- Overall progress ---------- */
+  .progress-wrap { margin: 22px 2px 6px; }
+  .progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .progress-top .label { color: #fff; font-weight: 600; font-size: .9rem; }
+  .progress-top .pct { color: var(--cyan); font-weight: 700; font-size: .9rem; }
+  .progress-track { height: 10px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--buraq); background-size: 200% 100%; transition: width .5s ease; animation: shimmer 2s linear infinite; }
+  @keyframes shimmer { to { background-position: 200% 0; } }
+
+  /* ---------- Spinner + badges ---------- */
+  .spinner { width: 15px; height: 15px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .badge { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: 5px 11px; border-radius: 999px; display: inline-flex; align-items: center; gap: 7px; background: #eef0f7; color: var(--muted); white-space: nowrap; }
+  .badge.running { background: #fff4ec; color: var(--orange-dark); }
+  .badge.done { background: #e8f9f0; color: #059669; }
+  .badge.error { background: #fdeaea; color: #dc2626; }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* ---------- Stage cards (shared) ---------- */
+  .stage { border-radius: 16px; margin-top: 18px; background: #fff; box-shadow: 0 12px 28px rgba(0,0,0,.20); overflow: hidden; opacity: .82; transition: opacity .3s ease, transform .3s ease; }
+  .stage.active { opacity: 1; transform: translateY(-2px); }
+  .stage-head { display: flex; align-items: center; gap: 12px; padding: 15px 20px; }
+  .stage-num { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; color: #fff; flex: none; }
+  .stage-title { font-weight: 700; font-size: 1.05rem; flex: 1; }
+  .stage-icon { font-size: 1.15rem; }
+  .stage-body { padding: 4px 20px 20px; }
+  .placeholder { color: var(--muted); font-style: italic; font-size: .92rem; }
+  .status-line { color: var(--muted); font-size: .92rem; display: flex; align-items: center; gap: 9px; }
+  .errbox { color: #dc2626; font-size: .92rem; background: #fdeaea; padding: 10px 12px; border-radius: 10px; }
+
+  /* ===== Section 1 — Business Research (ORANGE, definition layout) ===== */
+  #stage1 { border-top: 5px solid var(--orange); }
+  #stage1 .stage-num { background: linear-gradient(135deg, var(--orange), var(--orange-dark)); }
+  #stage1 .stage-title { color: var(--orange-dark); }
+  .kv { display: grid; grid-template-columns: 150px 1fr; gap: 10px 16px; font-size: .95rem; }
+  .kv dt { color: var(--orange-dark); font-weight: 700; }
+  .kv dd { margin: 0; color: var(--ink); }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { border-radius: 999px; padding: 4px 12px; font-size: .82rem; background: #f2f3f9; color: var(--ink); }
+  .chip.svc { background: #fff1e8; color: var(--orange-dark); border: 1px solid #ffd9c2; }
+  .chip.cat { background: #efeafc; color: var(--purple); border: 1px solid #e0d3f7; font-weight: 600; }
+
+  /* ===== Section 2 — Lead Sources (NAVY strip header, ledger rows) ===== */
+  #stage2 { border-top: 5px solid var(--navy-2); }
+  #stage2 .stage-head { background: linear-gradient(120deg, var(--navy), var(--navy-2)); }
+  #stage2 .stage-num { background: rgba(255,255,255,.16); }
+  #stage2 .stage-title { color: #fff; }
+  #stage2 .badge { box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .src-item { border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 10px; padding: 13px 15px; margin-top: 11px; background: linear-gradient(90deg, #f7f8ff, #fff 40%); }
+  .src-item:first-child { margin-top: 0; }
+  .src-item .srow { display: flex; align-items: baseline; gap: 8px; }
+  .src-item .idx { font-weight: 800; color: var(--blue); font-size: .95rem; }
+  .src-item .name { font-weight: 700; }
+  .src-item a { color: var(--blue); word-break: break-all; text-decoration: none; font-size: .9rem; }
+  .src-item a:hover { text-decoration: underline; }
+  .src-item .why { color: var(--muted); font-size: .88rem; margin-top: 5px; }
+  .src-item .stitch { font-size: .82rem; margin-top: 8px; padding: 7px 10px; background: #fff7ec; border-radius: 8px; color: #9a5b12; border: 1px dashed #f2c98c; }
+
+  /* ===== Section 3 — Leads (BURAQ gradient, contact cards) ===== */
+  #stage3 { border-top: 5px solid transparent; border-image: var(--buraq) 1; }
+  #stage3 .stage-head { background: var(--buraq); }
+  #stage3 .stage-num { background: rgba(255,255,255,.22); }
+  #stage3 .stage-title { color: #fff; }
+  .lead-card { position: relative; border: 1px solid var(--line); border-radius: 12px; padding: 15px 16px 15px 20px; margin-top: 13px; background: #fff; box-shadow: 0 4px 14px rgba(59,79,224,.08); overflow: hidden; }
+  .lead-card:first-child { margin-top: 0; }
+  .lead-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--buraq); }
+  .lead-card .lead-name { font-weight: 800; font-size: 1.02rem; margin-bottom: 8px; color: var(--navy); }
+  .lead-card .lead-name .num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--buraq); color: #fff; font-size: .8rem; margin-right: 8px; vertical-align: -3px; }
+  .contacts { display: flex; flex-direction: column; gap: 6px; }
+  .contacts .c { display: flex; align-items: center; gap: 9px; font-size: .92rem; }
+  .contacts .c .ci { width: 20px; text-align: center; }
+  .contacts .c a { color: var(--blue); text-decoration: none; word-break: break-all; }
+  .contacts .c a:hover { text-decoration: underline; }
+  .lead-card .src { margin-top: 10px; font-size: .78rem; color: var(--muted); word-break: break-all; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .empty { color: var(--muted); font-size: .92rem; text-align: center; padding: 14px; }
+
+  footer { text-align: center; color: rgba(255,255,255,.55); font-size: .8rem; margin-top: 30px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="brandbar">
+    <div class="logo-card"><img src="AGFinTax.png" alt="AG FinTax"></div>
+    <div class="powered">
+      <div class="lbl">Powered<br>by</div>
+      <div class="logo-card"><img src="Buraq.jpg" alt="Buraq"></div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>AI Lead Generation <span class="amp">Pipeline</span></h1>
+    <p>Discover local leads for your business in three intelligent stages.</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="field grow">
+      <label for="targetUrl">Business URL</label>
+      <input type="text" id="targetUrl" placeholder="https://your-tax-consultancy.com">
+    </div>
+    <div class="field num">
+      <label for="sourceCount">Sources</label>
+      <input type="number" id="sourceCount" min="1" max="8" value="3">
+    </div>
+    <div class="field num">
+      <label for="leadCount">Leads</label>
+      <input type="number" id="leadCount" min="1" max="8" value="3">
+    </div>
+    <button class="run" id="runBtn" onclick="runPipeline()">🚀 Start Research</button>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-top">
+      <span class="label" id="progressLabel">Ready to start</span>
+      <span class="pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- Stage 1 -->
+  <section class="stage" id="stage1">
+    <div class="stage-head">
+      <div class="stage-num">1</div>
+      <span class="stage-icon">🏢</span>
+      <div class="stage-title">Business Research</div>
+      <span class="badge" id="badge1"><span class="dot"></span>Waiting</span>
+    </div>
+    <div class="stage-body" id="body1"><div class="placeholder">Waiting to start…</div></div>
+  </section>
+
+  <!-- Stage 2 -->
+  <section class="stage" id="stage2">
+    <div class="stage-head">
+      <div class="stage-num">2</div>
+      <span class="stage-icon">🌐</span>
+      <div class="stage-title">Lead Sources</div>
+      <span class="badge" id="badge2"><span class="dot"></span>Waiting</span>
+    </div>
+    <div class="stage-body" id="body2"><div class="placeholder">Waiting for business research…</div></div>
+  </section>
+
+  <!-- Stage 3 -->
+  <section class="stage" id="stage3">
+    <div class="stage-head">
+      <div class="stage-num">3</div>
+      <span class="stage-icon">🎯</span>
+      <div class="stage-title">Leads Pulled</div>
+      <span class="badge" id="badge3"><span class="dot"></span>Waiting</span>
+    </div>
+    <div class="stage-body" id="body3"><div class="placeholder">Waiting for lead sources…</div></div>
+  </section>
+
+  <footer>AG FinTax — Financial &amp; Tax Services · AI pipeline powered by Buraq</footer>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+function setProgress(pct, label) {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  if (label) document.getElementById('progressLabel').textContent = label;
+}
+function setActive(n) {
+  [1, 2, 3].forEach(i => document.getElementById('stage' + i).classList.toggle('active', i === n));
+}
+function setBadge(n, state, label) {
+  const b = document.getElementById('badge' + n);
+  b.className = 'badge ' + state;
+  const glyph = state === 'running'
+    ? '<span class="spinner"></span>'
+    : '<span class="dot"></span>';
+  b.innerHTML = glyph + label;
+}
+function setBody(n, html) { document.getElementById('body' + n).innerHTML = html; }
+function running(n, msg) { setBody(n, `<div class="status-line"><span class="spinner"></span>${esc(msg)}</div>`); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+async function postJSON(path, body) {
+  const res = await fetch(API + path, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch (e) {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+function renderBusiness(b) {
+  const services = (b.services || []).map(s => `<span class="chip svc">${esc(s)}</span>`).join('');
+  const cats = (b.icp_categories || []).map(s => `<span class="chip cat">${esc(s)}</span>`).join('');
+  setBody(1, `
+    <dl class="kv">
+      <dt>Business</dt><dd>${esc(b.business_name)}</dd>
+      <dt>Location</dt><dd>${esc(b.location)}</dd>
+      <dt>Services</dt><dd><div class="chips">${services || '<span class="chip">—</span>'}</div></dd>
+      <dt>Ideal Customer</dt><dd>${esc(b.icp)}</dd>
+      <dt>ICP Categories</dt><dd><div class="chips">${cats || '<span class="chip">—</span>'}</div></dd>
+      ${b.branding_notes ? `<dt>Branding</dt><dd>${esc(b.branding_notes)}</dd>` : ''}
+    </dl>`);
+}
+
+function renderSources(sources) {
+  if (!sources.length) { setBody(2, '<div class="empty">No lead sources found.</div>'); return; }
+  setBody(2, sources.map((s, i) => `
+    <div class="src-item">
+      <div class="srow"><span class="idx">${i + 1}.</span><span class="name">${esc(s.source_name)}</span></div>
+      <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a>
+      <div class="why">${esc(s.why_relevant)}</div>
+      ${s.stitching_instructions ? `<div class="stitch"><b>Stitching:</b> ${esc(s.stitching_instructions)}</div>` : ''}
+    </div>`).join(''));
+}
+
+function renderLeads(leads) {
+  if (!leads.length) { setBody(3, '<div class="empty">No valid leads found.</div>'); return; }
+  const c = (icon, val, link) => val
+    ? `<div class="c"><span class="ci">${icon}</span>${link ? `<a href="${esc(val)}" target="_blank" rel="noopener">${esc(val)}</a>` : `<span>${esc(val)}</span>`}</div>`
+    : '';
+  setBody(3, leads.map((l, i) => `
+    <div class="lead-card">
+      <div class="lead-name"><span class="num">${i + 1}</span>${esc(l.name)}</div>
+      <div class="contacts">
+        ${c('📞', l.phone)}
+        ${c('✉️', l.business_email)}
+        ${c('📧', l.personal_email)}
+        ${c('🔗', l.linkedin_url, true)}
+      </div>
+      <div class="src">Source: ${esc(l.source_url)}</div>
+    </div>`).join(''));
+}
+
+async function runPipeline() {
+  const url = document.getElementById('targetUrl').value.trim();
+  const sourceCount = Number(document.getElementById('sourceCount').value || 3);
+  const leadCount = Number(document.getElementById('leadCount').value || 3);
+  if (!url) { alert('Please enter a business URL.'); return; }
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  [1, 2, 3].forEach(n => { setBadge(n, '', 'Waiting'); setBody(n, '<div class="placeholder">Waiting…</div>'); });
+  setProgress(5, 'Starting pipeline…');
+
+  try {
+    // Stage 1 — Business research
+    setActive(1); setBadge(1, 'running', 'Running');
+    setProgress(10, 'Stage 1 · Researching the business…');
+    running(1, 'Reading the website and inferring the ideal customer profile…');
+    const business = await postJSON('/research-business', { url });
+    renderBusiness(business);
+    setBadge(1, 'done', 'Done'); setProgress(33, 'Business research complete');
+
+    // Stage 2 — Lead sources
+    setActive(2); setBadge(2, 'running', 'Running');
+    setProgress(45, 'Stage 2 · Finding lead sources…');
+    running(2, 'Searching for local businesses that match the ICP…');
+    const sourcesResp = await postJSON('/find-lead-sources', { business_research: business, source_count: sourceCount });
+    renderSources(sourcesResp.lead_sources);
+    setBadge(2, 'done', 'Done'); setProgress(66, 'Lead sources found');
+
+    // Stage 3 — Pull leads
+    setActive(3); setBadge(3, 'running', 'Running');
+    setProgress(80, 'Stage 3 · Pulling contact details…');
+    running(3, 'Scraping source pages for phone, email and LinkedIn…');
+    const leadsResp = await postJSON('/pull-leads', { lead_sources: sourcesResp.lead_sources, lead_count: leadCount });
+    renderLeads(leadsResp.leads);
+    setBadge(3, 'done', 'Done'); setProgress(100, 'Done — leads ready 🎉');
+    setActive(0);
+  } catch (err) {
+    for (const n of [1, 2, 3]) {
+      if (document.getElementById('badge' + n).classList.contains('running')) {
+        setBadge(n, 'error', 'Error');
+        setBody(n, `<div class="errbox">${esc(err.message)}</div>`);
+        setProgress(document.getElementById('progressFill').style.width.replace('%','') || 0, 'Stopped on an error');
+        break;
+      }
+    }
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
