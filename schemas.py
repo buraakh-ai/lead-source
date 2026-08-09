@@ -47,13 +47,6 @@ class LeadSourceList(BaseModel):
     sources: List[LeadSource]
 
 
-# class Lead(BaseModel):
-#     name: str
-#     phone: Optional[str] = None
-#     business_email: Optional[str] = None
-#     personal_email: Optional[str] = None
-#     linkedin_url: Optional[str] = None
-#     source_url: str
 class Lead(BaseModel):
     name: str
     phone: Optional[str] = None
@@ -61,6 +54,7 @@ class Lead(BaseModel):
     personal_email: Optional[str] = None
     linkedin_url: Optional[str] = None
     source_url: Optional[str] = None
+
 
 class LeadList(BaseModel):
     leads: List[Lead]

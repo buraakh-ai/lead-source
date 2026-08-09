@@ -2,10 +2,24 @@ agno
 fastapi
 uvicorn[standard]
 python-dotenv
+pydantic
+pydantic-settings
+pyyaml
+
+# LLM providers
 groq
 openai
 ollama
+
+# Search / places APIs
 google-search-results
-beautifulsoup4
 requests
-pydantic
+beautifulsoup4
+
+# Web scraping fallback chain (tools/scraping/)
+scrapling
+crawl4ai
+playwright
+
+# Frontend
+streamlit

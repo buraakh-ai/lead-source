@@ -1,18 +1,21 @@
 from typing import List
 
 from agno.utils.log import log_info
+from agno.workflow import Step, StepInput, StepOutput, Workflow
 
-from .agents import (
-    build_business_research_agent,
-    build_lead_puller_agent,
-    build_lead_source_agent,
-)
-from .schemas import BusinessResearch, Lead, LeadList, LeadSource, LeadSourceList
+from agents import build_business_research_agent, build_lead_puller_agent, build_lead_source_agent
+from config.settings import get_settings
+from schemas import BusinessResearch, Lead, LeadList, LeadSource, LeadSourceList
 
 # Each stage is exposed as its own function (and its own FastAPI endpoint), so the
-# three agents no longer run back-to-back inside a single request. The frontend
+# three agents don't have to run back-to-back inside a single request. The frontend
 # calls them sequentially and renders each result as it arrives, which also gives
 # the per-minute token rate-limit window time to recover between stages.
+#
+# The same three functions are also wired into an Agno Workflow below
+# (build_lead_generation_workflow) for true sequential multi-agent orchestration
+# in a single call - used by the CLI, the /run-pipeline endpoint, and (later) an
+# MCP tool.
 
 
 def research_business(url: str) -> BusinessResearch:
@@ -60,3 +63,31 @@ def pull_leads(lead_sources: List[LeadSource], lead_count: int) -> List[Lead]:
     leads = valid_leads[:lead_count]
     log_info(f"[Pipeline] Lead pulling done: {len(leads)} valid leads out of {len(result.leads)} returned")
     return leads
+
+
+def build_lead_generation_workflow(source_count: int, lead_count: int) -> Workflow:
+    """Sequential multi-agent workflow: Business Research -> Lead Source
+    Research -> Lead Puller, wired with Agno's native Workflow/Step so the
+    whole pipeline can be run in a single call (workflow.run(url))."""
+    max_retries = get_settings().WORKFLOW_STEP_MAX_RETRIES
+
+    def _research_step(step_input: StepInput) -> StepOutput:
+        url = step_input.get_input_as_string() or ""
+        return StepOutput(content=research_business(url))
+
+    def _source_step(step_input: StepInput) -> StepOutput:
+        business_research: BusinessResearch = step_input.previous_step_content
+        return StepOutput(content=find_lead_sources(business_research, source_count))
+
+    def _puller_step(step_input: StepInput) -> StepOutput:
+        lead_sources: List[LeadSource] = step_input.previous_step_content
+        return StepOutput(content=pull_leads(lead_sources, lead_count))
+
+    return Workflow(
+        name="Lead Generation Pipeline",
+        steps=[
+            Step(name="Research Business", executor=_research_step, max_retries=max_retries),
+            Step(name="Find Lead Sources", executor=_source_step, max_retries=max_retries),
+            Step(name="Pull Leads", executor=_puller_step, max_retries=max_retries),
+        ],
+    )
