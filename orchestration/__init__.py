@@ -3,6 +3,7 @@ from orchestration.lead_pipeline import (
     find_lead_sources,
     pull_leads,
     research_business,
+    run_sourcing_campaign,
 )
 
 __all__ = [
@@ -10,4 +11,5 @@ __all__ = [
     "find_lead_sources",
     "pull_leads",
     "build_lead_generation_workflow",
+    "run_sourcing_campaign",
 ]

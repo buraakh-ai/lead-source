@@ -87,6 +87,8 @@ def google_places_search(
         place_id = result.get("place_id")
         website = None
         phone = None
+        detail = {}
+        detail_status = None
 
         if place_id:
             try:
@@ -94,7 +96,7 @@ def google_places_search(
                     "https://maps.googleapis.com/maps/api/place/details/json",
                     params={
                         "place_id": place_id,
-                        "fields": "website,formatted_phone_number",
+                        "fields": "website,formatted_phone_number,url,business_status,opening_hours",
                         "key": api_key,
                     },
                     timeout=REQUEST_TIMEOUT,
@@ -128,9 +130,18 @@ def google_places_search(
         places.append(
             {
                 "name": result.get("name"),
+                "place_id": place_id,
                 "website": website,
                 "formatted_address": result.get("formatted_address"),
                 "phone": phone,
+                "google_maps_url": detail.get("url") if place_id and detail_status == "OK" else None,
+                "rating": result.get("rating"),
+                "review_count": result.get("user_ratings_total"),
+                "business_status": result.get("business_status"),
+                "types": result.get("types", []),
+                "open_now": (detail.get("opening_hours") or {}).get("open_now")
+                if place_id and detail_status == "OK"
+                else None,
             }
         )
 

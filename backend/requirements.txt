@@ -5,24 +5,13 @@ python-dotenv
 pydantic
 pydantic-settings
 pyyaml
-
-# LLM providers
 groq
 openai
 ollama
-
-# Search / places APIs
 google-search-results
 requests
 beautifulsoup4
-
-# Web scraping fallback chain (tools/scraping/)
 scrapling
 crawl4ai
 playwright
-
-# Frontend
-streamlit
-
-# Optional central AWS PostgreSQL persistence
 psycopg[binary]

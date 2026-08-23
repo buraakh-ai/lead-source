@@ -55,8 +55,18 @@ class Settings(BaseSettings):
     # --- Frontend --------------------------------------------------------------
     BACKEND_URL: str = "http://localhost:8000"
 
+    # --- Central AWS PostgreSQL database --------------------------------------
+    # Example only: postgresql://user:password@host:5432/database?sslmode=require
+    # Keep the real value in .env or an AWS secret, never in source control.
+    AWS_POSTGRES_DSN: Optional[str] = None
+    DATABASE_AUTO_CREATE_TABLES: bool = True
+
     # --- Debugging ---------------------------------------------------------------
     DEBUG_MODE: bool = False
+    # Emit each discovered source and lead as one structured JSON log line.
+    # Useful for the backend-only AWS proof of concept; disable after the
+    # PostgreSQL handoff is enabled if contact data should not remain in logs.
+    LOG_SOURCING_DETAILS: bool = True
 
 
 @lru_cache

@@ -50,7 +50,7 @@ def build_lead_source_agent(source_count: int) -> Agent:
             google_places_search,
             discover_contact_pages,
         ],
-        tool_call_limit=source_count * 2 + 4,
+        tool_call_limit=source_count * 3 + 6,
         output_schema=LeadSourceList,
         instructions=prompt["instructions"],
         markdown=False,
