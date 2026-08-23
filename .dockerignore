@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+.env
+.env.*
+!.env.example
+uv.lock
+*.png
+*.jpg
+LeadGeneration.html

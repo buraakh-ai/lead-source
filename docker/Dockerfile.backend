@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Chromium + OS deps for the Playwright/Crawl4AI scraping tiers.
+RUN playwright install --with-deps chromium
+
+# Backend runtime only. The Streamlit UI, tests, local files and Git metadata
+# are intentionally absent from this image.
+COPY backend /app/backend
+COPY agents /app/agents
+COPY config /app/config
+COPY llm /app/llm
+COPY orchestration /app/orchestration
+COPY prompts /app/prompts
+COPY skills /app/skills
+COPY tools /app/tools
+COPY database.py lead_quality.py schemas.py /app/
+
+EXPOSE 8000
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
