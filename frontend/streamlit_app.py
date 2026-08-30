@@ -128,9 +128,9 @@ with st.sidebar:
     exclusion_text = st.text_input("Exclude keywords", value=", ".join(loaded.get("exclusion_keywords", [])), placeholder="permanently closed, franchise corporate office")
 
     st.subheader("Run controls")
-    source_count = st.slider("Businesses to discover", 1, 50, 10)
-    lead_count = st.slider("Qualified leads to return", 1, 50, 10)
-    persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=True)
+    source_count = st.slider("Businesses to discover", 1, 100, 10)
+    lead_count = st.slider("Qualified leads to return", 1, 100, 10)
+    persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=False)
 
 areas = list(dict.fromkeys(selected_areas + _split_csv(custom_areas)))
 industries = list(dict.fromkeys(selected_industries + _split_csv(custom_industries)))

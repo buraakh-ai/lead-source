@@ -123,6 +123,10 @@ sequential `Step`s, giving a single-call entry point used by the CLI, the
 
 ### Create the AWS RDS PostgreSQL lead database
 
+For the complete team handoff procedure, including AWS Console, networking,
+local initialization, and verification steps, see
+[`docs/AWS_RDS_HANDOFF.md`](docs/AWS_RDS_HANDOFF.md).
+
 1. In AWS RDS, create a PostgreSQL instance and an initial database (for
    example, `lead_generation`). Allow inbound TCP 5432 only from the backend's
    security group or your temporary administration IP; do not expose it to the

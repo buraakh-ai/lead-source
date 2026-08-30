@@ -65,9 +65,9 @@ def health_endpoint():
 
 class SourcingCampaignRequest(BaseModel):
     campaign: CampaignTarget
-    source_count: int = Field(default=10, ge=1, le=50)
-    lead_count: int = Field(default=10, ge=1, le=50)
-    persist_to_database: bool = True
+    source_count: int = Field(default=10, ge=1, le=100)
+    lead_count: int = Field(default=10, ge=1, le=100)
+    persist_to_database: bool = False
 
 
 @app.post("/run-sourcing-campaign", response_model=SourcingCampaignResponse)
@@ -148,7 +148,7 @@ def research_business_endpoint(payload: ResearchBusinessRequest):
 # --- Stage 2: Lead sources -----------------------------------------------------
 class FindLeadSourcesRequest(BaseModel):
     business_research: BusinessResearch
-    source_count: int = Field(default=8, ge=1, le=20)
+    source_count: int = Field(default=8, ge=1, le=100)
     campaign_target: CampaignTarget = Field(default_factory=CampaignTarget)
 
 
@@ -168,7 +168,7 @@ def find_lead_sources_endpoint(payload: FindLeadSourcesRequest):
 # --- Stage 3: Pull leads -------------------------------------------------------
 class PullLeadsRequest(BaseModel):
     lead_sources: List[LeadSource]
-    lead_count: int = Field(default=8, ge=1, le=20)
+    lead_count: int = Field(default=8, ge=1, le=100)
     campaign_target: CampaignTarget = Field(default_factory=CampaignTarget)
 
 
@@ -184,8 +184,8 @@ def pull_leads_endpoint(payload: PullLeadsRequest):
 # --- Convenience: run the full sequential workflow in one call -----------------
 class RunPipelineRequest(BaseModel):
     url: str
-    source_count: int = Field(default=8, ge=1, le=20)
-    lead_count: int = Field(default=8, ge=1, le=20)
+    source_count: int = Field(default=8, ge=1, le=100)
+    lead_count: int = Field(default=8, ge=1, le=100)
     campaign_target: CampaignTarget = Field(default_factory=CampaignTarget)
 
 
