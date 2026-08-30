@@ -128,8 +128,28 @@ with st.sidebar:
     exclusion_text = st.text_input("Exclude keywords", value=", ".join(loaded.get("exclusion_keywords", [])), placeholder="permanently closed, franchise corporate office")
 
     st.subheader("Run controls")
-    source_count = st.slider("Businesses to discover", 1, 100, 10)
+    pipeline_version = st.radio("Pipeline version", ["Version 1", "Version 2 preview"], horizontal=True)
+    is_v2 = pipeline_version == "Version 2 preview"
+    source_count = st.slider("Businesses to discover", 1, 500 if is_v2 else 100, 100 if is_v2 else 10)
     lead_count = st.slider("Qualified leads to return", 1, 100, 10)
+    if is_v2:
+        provider_labels = {
+            "Google Places": "google_places",
+            "Public web": "web_search",
+            "Yellow Pages": "yellow_pages",
+            "Chambers": "chambers",
+            "Sulekha": "sulekha",
+        }
+        selected_provider_labels = st.multiselect(
+            "Discovery providers",
+            list(provider_labels),
+            default=["Google Places", "Public web", "Yellow Pages", "Chambers"],
+        )
+        oversampling_factor = st.slider("Candidate coverage", 1, 10, 3)
+        max_queries = st.slider("Maximum discovery queries", 1, 200, 40)
+        results_per_query = st.slider("Results per query", 1, 20, 10)
+        max_pages_per_query = st.slider("Pages per query", 1, 3, 2)
+        enrichment_batch_size = st.slider("Enrichment batch size", 1, 25, 10)
     persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=False)
 
 areas = list(dict.fromkeys(selected_areas + _split_csv(custom_areas)))
@@ -168,7 +188,26 @@ top4.write(f"**Destination:** {'AWS PostgreSQL configured' if db_ready else 'CSV
 if run_campaign:
     progress = st.progress(10, text="Starting public-source discovery…")
     try:
-        result = _post("/run-sourcing-campaign", {"campaign": campaign, "source_count": source_count, "lead_count": lead_count, "persist_to_database": persist_to_database})
+        payload = {
+            "campaign": campaign,
+            "source_count": source_count,
+            "lead_count": lead_count,
+            "persist_to_database": persist_to_database,
+        }
+        endpoint = "/run-sourcing-campaign"
+        if is_v2:
+            if not selected_provider_labels:
+                raise RuntimeError("Select at least one V2 discovery provider.")
+            endpoint = "/v2/run-sourcing-campaign"
+            payload["discovery"] = {
+                "providers": [provider_labels[label] for label in selected_provider_labels],
+                "oversampling_factor": oversampling_factor,
+                "max_queries": max_queries,
+                "results_per_query": results_per_query,
+                "max_pages_per_query": max_pages_per_query,
+                "enrichment_batch_size": enrichment_batch_size,
+            }
+        result = _post(endpoint, payload)
         progress.progress(100, text="Lead sourcing completed")
         st.session_state.lead_sources = result["lead_sources"]
         st.session_state.leads = result["leads"]
@@ -227,6 +266,27 @@ with handoff_tab:
         c2.metric("Duration", f"{summary['duration_seconds']:.1f}s")
         c3.metric("Sources", summary["sources_discovered"])
         c4.metric("Leads", summary["leads_returned"])
+        discovery = summary.get("discovery_metrics")
+        if discovery:
+            st.subheader("V2 discovery funnel")
+            d1, d2, d3, d4 = st.columns(4)
+            d1.metric("Raw candidates", discovery["raw_candidates"])
+            d2.metric("Unique candidates", discovery["unique_candidates"])
+            d3.metric("Sources selected", discovery["sources_selected"])
+            d4.metric("Queries", f"{discovery['queries_executed']} / {discovery['queries_planned']}")
+            st.caption(
+                f"Enrichment: {discovery.get('sources_attempted', 0)} sources across "
+                f"{discovery.get('enrichment_batches', 0)} batches"
+            )
+            provider_col, rejection_col = st.columns(2)
+            provider_col.markdown("**Candidates by provider**")
+            provider_col.json(discovery.get("provider_counts", {}), expanded=True)
+            rejection_col.markdown("**Rejected candidates**")
+            rejection_col.json(discovery.get("rejection_counts", {}), expanded=True)
+            if discovery.get("provider_errors"):
+                st.warning(f"Provider errors: {discovery['provider_errors']}")
+            if discovery.get("exhausted_before_target"):
+                st.info("Configured providers were exhausted before reaching the raw candidate target.")
         if summary["database_saved"]:
             st.success(summary["database_message"])
         else:
