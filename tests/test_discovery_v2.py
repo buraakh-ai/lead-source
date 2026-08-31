@@ -70,6 +70,29 @@ class DiscoveryV2Tests(unittest.TestCase):
         self.assertEqual(len(sources), 2)
         self.assertEqual(metrics.unique_candidates, 2)
 
+    def test_custom_provider_uses_the_standard_source_contract_and_deduplication(self):
+        campaign = CampaignTarget(cities_or_areas=["Irvine"], industries=["Restaurants"])
+        options = DiscoveryOptions(providers=["new_public_source"], max_pages_per_query=1)
+
+        def fake_fetcher(query, page, page_size):
+            candidate = Candidate(
+                query.provider,
+                "Example Cafe",
+                "https://example.test/contact",
+                query.category,
+                query.location,
+            )
+            return [candidate, candidate], None, None
+
+        sources, metrics = discover_sources_v2(
+            campaign, 10, 2, options, {"new_public_source": fake_fetcher}
+        )
+
+        self.assertEqual(len(sources), 1)
+        self.assertEqual(sources[0].source_type, "new_public_source")
+        self.assertEqual(set(sources[0].model_dump()), set(LeadSource.model_fields))
+        self.assertEqual(metrics.rejection_counts, {"duplicate": 1})
+
     @patch("orchestration.lead_pipeline.pull_leads")
     @patch("orchestration.lead_pipeline.discover_sources_v2")
     def test_v2_enriches_sources_in_bounded_batches(self, discover_mock, pull_mock):

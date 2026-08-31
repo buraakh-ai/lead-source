@@ -70,7 +70,7 @@ class SourcingCampaignRequest(BaseModel):
     campaign: CampaignTarget
     source_count: int = Field(default=10, ge=1, le=100)
     lead_count: int = Field(default=10, ge=1, le=100)
-    persist_to_database: bool = False
+    persist_to_database: bool = True
 
 
 @app.post("/run-sourcing-campaign", response_model=SourcingCampaignResponse)
@@ -138,7 +138,7 @@ class SourcingCampaignV2Request(BaseModel):
     source_count: int = Field(default=100, ge=1, le=500)
     lead_count: int = Field(default=100, ge=1, le=100)
     discovery: DiscoveryOptions = Field(default_factory=DiscoveryOptions)
-    persist_to_database: bool = False
+    persist_to_database: bool = True
 
 
 @app.post("/v2/run-sourcing-campaign", response_model=SourcingCampaignV2Response)

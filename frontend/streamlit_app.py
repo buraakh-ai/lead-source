@@ -150,7 +150,7 @@ with st.sidebar:
         results_per_query = st.slider("Results per query", 1, 20, 10)
         max_pages_per_query = st.slider("Pages per query", 1, 3, 2)
         enrichment_batch_size = st.slider("Enrichment batch size", 1, 25, 10)
-    persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=False)
+    persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=True)
 
 areas = list(dict.fromkeys(selected_areas + _split_csv(custom_areas)))
 industries = list(dict.fromkeys(selected_industries + _split_csv(custom_industries)))

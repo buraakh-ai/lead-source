@@ -149,19 +149,12 @@ class SourcingCampaignResponse(BaseModel):
     run_summary: RunSummary
 
 
-DiscoveryProviderName = Literal[
-    "google_places",
-    "web_search",
-    "yellow_pages",
-    "chambers",
-    "sulekha",
-]
-
-
 class DiscoveryOptions(BaseModel):
     """Controls deterministic V2 candidate discovery before LLM enrichment."""
 
-    providers: List[DiscoveryProviderName] = Field(
+    # Provider names intentionally remain open-ended. Each provider adapter emits
+    # the same Candidate contract before normalization into LeadSource.
+    providers: List[str] = Field(
         default_factory=lambda: ["google_places", "web_search", "yellow_pages", "chambers"],
         min_length=1,
     )

@@ -79,13 +79,14 @@ Use `POST /v2/run-sourcing-campaign`. Example discovery configuration:
     "max_pages_per_query": 2,
     "enrichment_batch_size": 10
   },
-  "persist_to_database": false
+  "persist_to_database": true
 }
 ```
 
 The Streamlit sidebar exposes the same options under **Version 2 preview**.
-Keep `persist_to_database` disabled during client evaluation unless the test
-database is intended to receive preview data.
+Database persistence defaults to enabled. For local or preview-only runs, either
+leave `AWS_POSTGRES_DSN` unset (persistence is skipped safely) or explicitly send
+`persist_to_database: false`.
 
 ## Configuration and cost controls
 
