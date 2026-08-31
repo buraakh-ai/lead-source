@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import Dict, List, Literal, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -139,10 +139,54 @@ class RunSummary(BaseModel):
     database_configured: bool = False
     database_saved: bool = False
     database_message: str = "Database persistence was not requested."
+    discovery_metrics: Optional[Dict[str, object]] = None
 
 
 class SourcingCampaignResponse(BaseModel):
     campaign: CampaignTarget
+    lead_sources: List[LeadSource]
+    leads: List[Lead]
+    run_summary: RunSummary
+
+
+class DiscoveryOptions(BaseModel):
+    """Controls deterministic V2 candidate discovery before LLM enrichment."""
+
+    # Provider names intentionally remain open-ended. Each provider adapter emits
+    # the same Candidate contract before normalization into LeadSource.
+    providers: List[str] = Field(
+        default_factory=lambda: ["google_places", "web_search", "yellow_pages", "chambers"],
+        min_length=1,
+    )
+    oversampling_factor: int = Field(default=3, ge=1, le=10)
+    max_queries: int = Field(default=40, ge=1, le=200)
+    results_per_query: int = Field(default=10, ge=1, le=20)
+    max_pages_per_query: int = Field(default=2, ge=1, le=3)
+    enrichment_batch_size: int = Field(default=10, ge=1, le=25)
+
+
+class DiscoveryMetrics(BaseModel):
+    requested_sources: int
+    requested_leads: int
+    raw_candidate_target: int
+    queries_planned: int = 0
+    queries_executed: int = 0
+    raw_candidates: int = 0
+    unique_candidates: int = 0
+    sources_selected: int = 0
+    provider_counts: Dict[str, int] = Field(default_factory=dict)
+    rejection_counts: Dict[str, int] = Field(default_factory=dict)
+    provider_errors: Dict[str, int] = Field(default_factory=dict)
+    exhausted_before_target: bool = False
+    enrichment_batches: int = 0
+    sources_attempted: int = 0
+    leads_before_global_deduplication: int = 0
+
+
+class SourcingCampaignV2Response(BaseModel):
+    version: Literal["2"] = "2"
+    campaign: CampaignTarget
+    discovery_metrics: DiscoveryMetrics
     lead_sources: List[LeadSource]
     leads: List[Lead]
     run_summary: RunSummary

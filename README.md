@@ -127,6 +127,10 @@ For the complete team handoff procedure, including AWS Console, networking,
 local initialization, and verification steps, see
 [`docs/AWS_RDS_HANDOFF.md`](docs/AWS_RDS_HANDOFF.md).
 
+The client-review preview for deterministic, multi-source discovery is
+documented separately in
+[`docs/V2_MULTI_SOURCE_DISCOVERY.md`](docs/V2_MULTI_SOURCE_DISCOVERY.md).
+
 1. In AWS RDS, create a PostgreSQL instance and an initial database (for
    example, `lead_generation`). Allow inbound TCP 5432 only from the backend's
    security group or your temporary administration IP; do not expose it to the
@@ -232,6 +236,7 @@ the database rather than CloudWatch logs.
 |---|---|
 | `GET /health` | Service and AWS PostgreSQL configuration status |
 | `POST /run-sourcing-campaign` | Primary Phase 1 workflow: campaign → sources → qualified leads → optional database handoff |
+| `POST /v2/run-sourcing-campaign` | V2 preview: deterministic multi-provider discovery → funnel metrics → batched enrichment → optional database handoff |
 | `POST /research-business` | Stage 1: `{url}` → `BusinessResearch` |
 | `POST /find-lead-sources` | Stage 2: `{business_research, source_count, campaign_target}` → `{lead_sources}` |
 | `POST /pull-leads` | Stage 3: `{lead_sources, lead_count, campaign_target}` → `{leads}` |

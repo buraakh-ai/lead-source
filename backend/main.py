@@ -24,14 +24,17 @@ from orchestration.lead_pipeline import (  # noqa: E402
     pull_leads,
     research_business,
     run_sourcing_campaign,
+    run_sourcing_campaign_v2,
 )
 from database import database_configured, persist_sourcing_run  # noqa: E402
 from schemas import (  # noqa: E402
     BusinessResearch,
     CampaignTarget,
+    DiscoveryOptions,
     Lead,
     LeadSource,
     SourcingCampaignResponse,
+    SourcingCampaignV2Response,
 )
 
 app = FastAPI(title="AI Lead Generation Pipeline")
@@ -67,7 +70,7 @@ class SourcingCampaignRequest(BaseModel):
     campaign: CampaignTarget
     source_count: int = Field(default=10, ge=1, le=100)
     lead_count: int = Field(default=10, ge=1, le=100)
-    persist_to_database: bool = False
+    persist_to_database: bool = True
 
 
 @app.post("/run-sourcing-campaign", response_model=SourcingCampaignResponse)
@@ -127,6 +130,60 @@ def run_sourcing_campaign_endpoint(payload: SourcingCampaignRequest):
         return response
     except Exception as exc:
         logger.exception("campaign_failed campaign_id=%s", payload.campaign.campaign_id)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+class SourcingCampaignV2Request(BaseModel):
+    campaign: CampaignTarget
+    source_count: int = Field(default=100, ge=1, le=500)
+    lead_count: int = Field(default=100, ge=1, le=100)
+    discovery: DiscoveryOptions = Field(default_factory=DiscoveryOptions)
+    persist_to_database: bool = True
+
+
+@app.post("/v2/run-sourcing-campaign", response_model=SourcingCampaignV2Response)
+def run_sourcing_campaign_v2_endpoint(payload: SourcingCampaignV2Request):
+    """Deterministic multi-provider discovery with visible funnel metrics."""
+    if not payload.campaign.industries and not payload.campaign.subcategories:
+        raise HTTPException(status_code=400, detail="At least one industry or subcategory is required")
+    if not payload.campaign.state and not payload.campaign.cities_or_areas:
+        raise HTTPException(status_code=400, detail="A state or city/area is required")
+    try:
+        sources, leads, summary, discovery_metrics = run_sourcing_campaign_v2(
+            payload.campaign,
+            payload.source_count,
+            payload.lead_count,
+            payload.discovery,
+        )
+        summary.database_configured = database_configured()
+        if payload.persist_to_database:
+            try:
+                saved, message = persist_sourcing_run(payload.campaign, sources, leads, summary)
+                summary.database_saved = saved
+                summary.database_message = message
+            except Exception as database_exc:
+                logger.exception("V2 AWS PostgreSQL persistence failed")
+                summary.database_message = (
+                    "V2 discovery succeeded, but AWS PostgreSQL persistence failed: "
+                    f"{type(database_exc).__name__}. CSV export remains available."
+                )
+        logger.info(
+            "v2_campaign_completed run_id=%s raw=%d unique=%d sources=%d leads=%d",
+            summary.run_id,
+            discovery_metrics.raw_candidates,
+            discovery_metrics.unique_candidates,
+            len(sources),
+            len(leads),
+        )
+        return SourcingCampaignV2Response(
+            campaign=payload.campaign,
+            discovery_metrics=discovery_metrics,
+            lead_sources=sources,
+            leads=leads,
+            run_summary=summary,
+        )
+    except Exception as exc:
+        logger.exception("v2_campaign_failed campaign_id=%s", payload.campaign.campaign_id)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

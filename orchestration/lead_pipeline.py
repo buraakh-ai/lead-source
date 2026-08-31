@@ -16,7 +16,10 @@ from schemas import (
     LeadSource,
     LeadSourceList,
     RunSummary,
+    DiscoveryMetrics,
+    DiscoveryOptions,
 )
+from orchestration.discovery_v2 import discover_sources_v2
 
 # Each stage is exposed as its own function (and its own FastAPI endpoint), so the
 # three agents don't have to run back-to-back inside a single request. The frontend
@@ -140,6 +143,54 @@ def run_sourcing_campaign(
         incomplete_leads=sum(lead.verification_status == "incomplete" for lead in leads),
     )
     return sources, leads, summary
+
+
+def run_sourcing_campaign_v2(
+    campaign_target: CampaignTarget,
+    source_count: int,
+    lead_count: int,
+    discovery_options: DiscoveryOptions,
+) -> tuple[List[LeadSource], List[Lead], RunSummary, DiscoveryMetrics]:
+    """V2: deterministic multi-provider discovery followed by V1 enrichment."""
+    started_at = datetime.now(timezone.utc)
+    run_id = str(uuid4())
+    sources, discovery_metrics = discover_sources_v2(
+        campaign_target,
+        source_count,
+        lead_count,
+        discovery_options,
+    )
+    accumulated_leads: List[Lead] = []
+    leads: List[Lead] = []
+    for offset in range(0, len(sources), discovery_options.enrichment_batch_size):
+        batch = sources[offset : offset + discovery_options.enrichment_batch_size]
+        remaining = lead_count - len(leads)
+        if remaining <= 0:
+            break
+        batch_leads = pull_leads(batch, min(remaining, len(batch)), campaign_target)
+        accumulated_leads.extend(batch_leads)
+        leads = score_and_deduplicate_leads(accumulated_leads)[:lead_count]
+        discovery_metrics.enrichment_batches += 1
+        discovery_metrics.sources_attempted += len(batch)
+    discovery_metrics.leads_before_global_deduplication = len(accumulated_leads)
+    for lead in leads:
+        lead.run_id = run_id
+    completed_at = datetime.now(timezone.utc)
+    summary = RunSummary(
+        run_id=run_id,
+        campaign_id=campaign_target.campaign_id,
+        campaign_name=campaign_target.campaign_name,
+        started_at=started_at,
+        completed_at=completed_at,
+        duration_seconds=round((completed_at - started_at).total_seconds(), 3),
+        sources_discovered=len(sources),
+        leads_returned=len(leads),
+        verified_leads=sum(lead.verification_status == "verified" for lead in leads),
+        enriched_leads=sum(lead.verification_status == "enriched" for lead in leads),
+        incomplete_leads=sum(lead.verification_status == "incomplete" for lead in leads),
+        discovery_metrics=discovery_metrics.model_dump(),
+    )
+    return sources, leads, summary, discovery_metrics
 
 
 def build_lead_generation_workflow(
