@@ -9,6 +9,17 @@ logger = logging.getLogger(__name__)
 REQUEST_TIMEOUT = 10
 
 
+def google_places_error(status: str, error_message: str | None = None) -> str:
+    detail = error_message or "no details"
+    message = f"Google Places API error ({status}): {detail}"
+    if status == "REQUEST_DENIED":
+        message += (
+            ". Check that Places API and billing are enabled in the key's Google Cloud "
+            "project and that API/application restrictions allow requests from the AWS backend"
+        )
+    return message
+
+
 def google_places_search(
     query: str,
     location: str,
@@ -71,14 +82,7 @@ def google_places_search(
             error_message,
         )
 
-        return json.dumps(
-            {
-                "error": (
-                    f"Google Places API error ({status}): "
-                    f"{error_message}"
-                )
-            }
-        )
+        return json.dumps({"error": google_places_error(status, error_message)})
 
     results = payload.get("results", [])[:max_results]
     places = []

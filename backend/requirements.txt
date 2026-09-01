@@ -11,7 +11,7 @@ ollama
 google-search-results
 requests
 beautifulsoup4
-scrapling
+scrapling[fetchers]
 crawl4ai
 playwright
 psycopg[binary]

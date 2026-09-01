@@ -13,6 +13,7 @@ import requests
 
 from config.settings import get_settings
 from schemas import CampaignTarget, DiscoveryMetrics, DiscoveryOptions, LeadSource
+from tools.google_places import google_places_error
 
 logger = logging.getLogger(__name__)
 REQUEST_TIMEOUT = 10
@@ -96,7 +97,8 @@ def _google_places_fetch(
     except (requests.RequestException, ValueError) as exc:
         return [], None, str(exc)
     if payload.get("status") not in ("OK", "ZERO_RESULTS"):
-        return [], None, payload.get("error_message") or payload.get("status", "Places error")
+        status = payload.get("status", "Places error")
+        return [], None, google_places_error(status, payload.get("error_message"))
 
     candidates: list[Candidate] = []
     for item in payload.get("results", [])[:page_size]:
@@ -270,6 +272,13 @@ def discover_sources_v2(
             metrics.queries_executed += 1
             if error:
                 errors[query.provider] += 1
+                logger.warning(
+                    "V2 provider request failed provider=%s category=%r location=%r error=%s",
+                    query.provider,
+                    query.category,
+                    query.location,
+                    error,
+                )
                 break
             metrics.raw_candidates += len(candidates)
             for candidate in candidates:

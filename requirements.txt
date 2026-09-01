@@ -17,7 +17,7 @@ requests
 beautifulsoup4
 
 # Web scraping fallback chain (tools/scraping/)
-scrapling
+scrapling[fetchers]
 crawl4ai
 playwright
 

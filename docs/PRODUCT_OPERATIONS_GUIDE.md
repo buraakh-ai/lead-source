@@ -283,9 +283,11 @@ LIMIT 20;
 |---|---|
 | S3 configuration warning | Verify URI syntax, object key/case, IAM `s3:GetObject`, region/account policy, KMS access, and JSON validity. Defaults remain active. |
 | No sources | Verify Places/SerpAPI keys, selected providers, category/location combinations, quotas, and provider errors. |
+| Google Places `REQUEST_DENIED` | In the key's Google Cloud project, verify Places API and billing are enabled, then review API restrictions and AWS backend application/IP restrictions. Web search can continue, but Places coverage and metadata are unavailable. |
 | Sources but few leads | Public pages may lack contacts; review source URLs, scraper logs, sitemap results, and enrichment batch counts. |
 | LLM rate limits | Reduce campaign size, adjust agent tiers/model IDs, review provider quota, or ensure Ollama fallback is reachable. |
 | Thin/JS-only pages | Use the full backend image, confirm Playwright Chromium installation, and review `SCRAPER_MAX_ATTEMPTS`. |
+| Scrapling dependency/import failure | Confirm the deployed image was rebuilt from a requirements file containing `scrapling[fetchers]`; this supported extra installs `curl_cffi`, browserforge, and the other fetcher dependencies. |
 | `database_configured: false` | Inject `AWS_POSTGRES_DSN` into the backend, not the frontend. Restart the backend. |
 | `database_saved: false` | Check DSN database name, URL-encoded password, network/security groups, schema/table names, grants, and backend exception type. |
 | Duplicate records | Verify stable place IDs/domains/contact values; the DDL has no unique constraints, so non-application writers can still create duplicates. |
