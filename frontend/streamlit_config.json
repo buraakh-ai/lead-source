@@ -1,0 +1,69 @@
+{
+  "app": {
+    "page_title": "Lead Sourcing | Public-Source MVP",
+    "page_icon": "🔎",
+    "layout": "wide",
+    "title": "Lead Sourcing",
+    "caption": "Module 1 · Discover, enrich, verify and centralize public business prospects for downstream Ad Generator campaigns."
+  },
+  "backend": {
+    "default_url": "http://localhost:8000",
+    "request_timeout_seconds": 1200,
+    "health_timeout_seconds": 10
+  },
+  "campaign": {
+    "default_name": "California Small Business Discovery",
+    "statuses": ["draft", "active", "paused", "completed"],
+    "default_status": "active"
+  },
+  "geography": {
+    "countries": ["United States", "Canada", "United Kingdom", "Australia", "Other"],
+    "default_country": "United States",
+    "default_state": "California",
+    "us_states": [
+      "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+      "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+      "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+      "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+      "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+      "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+      "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+      "Wisconsin", "Wyoming"
+    ],
+    "state_areas": {
+      "California": ["Orange County", "Los Angeles County", "San Diego County", "Riverside County", "San Bernardino County", "Ventura County", "Irvine", "Tustin", "Anaheim", "Los Angeles", "San Diego"],
+      "Texas": ["Austin", "Dallas", "Fort Worth", "Houston", "San Antonio"],
+      "Florida": ["Miami", "Orlando", "Tampa", "Jacksonville", "Fort Lauderdale"],
+      "New York": ["New York City", "Buffalo", "Rochester", "Albany", "Syracuse"],
+      "Illinois": ["Chicago", "Springfield", "Naperville", "Rockford", "Peoria"]
+    }
+  },
+  "targeting": {
+    "industry_suggestions": ["Restaurants", "Retail", "Dentists", "Beauty salons and spas", "Gyms and fitness", "Medical clinics", "Real estate", "Construction", "Professional services", "Automotive"],
+    "default_industries": ["Restaurants", "Retail"],
+    "role_suggestions": ["Owner", "Founder", "General Manager", "Finance Manager", "Practice Manager", "Operations Manager"],
+    "default_roles": ["Owner", "Founder", "General Manager", "Finance Manager"]
+  },
+  "run_controls": {
+    "pipeline_versions": ["Version 1", "Version 2 preview"],
+    "default_pipeline_version": "Version 1",
+    "v2_pipeline_version": "Version 2 preview",
+    "source_count_v1": {"min": 1, "max": 100, "default": 10},
+    "source_count_v2": {"min": 1, "max": 500, "default": 100},
+    "lead_count": {"min": 1, "max": 100, "default": 10},
+    "provider_labels": {
+      "Google Places": "google_places",
+      "Public web": "web_search",
+      "Yellow Pages": "yellow_pages",
+      "Chambers": "chambers",
+      "Sulekha": "sulekha"
+    },
+    "default_providers": ["Google Places", "Public web", "Yellow Pages", "Chambers"],
+    "oversampling_factor": {"min": 1, "max": 10, "default": 3},
+    "max_queries": {"min": 1, "max": 200, "default": 40},
+    "results_per_query": {"min": 1, "max": 20, "default": 10},
+    "max_pages_per_query": {"min": 1, "max": 3, "default": 2},
+    "enrichment_batch_size": {"min": 1, "max": 25, "default": 10},
+    "persist_to_database": true
+  }
+}

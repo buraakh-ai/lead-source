@@ -6,7 +6,7 @@ COPY frontend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Frontend runtime only. No agents, scrapers, database code or backend secrets.
-COPY frontend/streamlit_app.py /app/streamlit_app.py
+COPY frontend/streamlit_app.py frontend/config_loader.py frontend/streamlit_config.json /app/
 
 EXPOSE 8501
 

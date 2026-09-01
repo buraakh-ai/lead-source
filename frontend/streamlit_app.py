@@ -9,37 +9,32 @@ from uuid import uuid4
 import requests
 import streamlit as st
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+from config_loader import load_config
 
-US_STATES = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
-    "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
-    "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
-    "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
-    "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-    "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
-    "Wisconsin", "Wyoming",
-]
 
-STATE_AREAS = {
-    "California": ["Orange County", "Los Angeles County", "San Diego County", "Riverside County", "San Bernardino County", "Ventura County", "Irvine", "Tustin", "Anaheim", "Los Angeles", "San Diego"],
-    "Texas": ["Austin", "Dallas", "Fort Worth", "Houston", "San Antonio"],
-    "Florida": ["Miami", "Orlando", "Tampa", "Jacksonville", "Fort Lauderdale"],
-    "New York": ["New York City", "Buffalo", "Rochester", "Albany", "Syracuse"],
-    "Illinois": ["Chicago", "Springfield", "Naperville", "Rockford", "Peoria"],
-}
+@st.cache_resource
+def _load_app_config():
+    return load_config()
 
-INDUSTRY_SUGGESTIONS = [
-    "Restaurants", "Retail", "Dentists", "Beauty salons and spas", "Gyms and fitness",
-    "Medical clinics", "Real estate", "Construction", "Professional services", "Automotive",
-]
 
-ROLE_SUGGESTIONS = ["Owner", "Founder", "General Manager", "Finance Manager", "Practice Manager", "Operations Manager"]
+CONFIG, CONFIG_WARNING = _load_app_config()
+APP_CONFIG = CONFIG["app"]
+BACKEND_CONFIG = CONFIG["backend"]
+CAMPAIGN_CONFIG = CONFIG["campaign"]
+GEOGRAPHY_CONFIG = CONFIG["geography"]
+TARGETING_CONFIG = CONFIG["targeting"]
+RUN_CONFIG = CONFIG["run_controls"]
+BACKEND_URL = os.getenv("BACKEND_URL", BACKEND_CONFIG["default_url"]).rstrip("/")
 
-st.set_page_config(page_title="Lead Sourcing | Public-Source MVP", page_icon="🔎", layout="wide")
-st.title("Lead Sourcing")
-st.caption("Module 1 · Discover, enrich, verify and centralize public business prospects for downstream Ad Generator campaigns.")
+st.set_page_config(
+    page_title=APP_CONFIG["page_title"],
+    page_icon=APP_CONFIG["page_icon"],
+    layout=APP_CONFIG["layout"],
+)
+st.title(APP_CONFIG["title"])
+st.caption(APP_CONFIG["caption"])
+if CONFIG_WARNING:
+    st.warning(CONFIG_WARNING)
 
 for key, default in {
     "campaign_id": str(uuid4()),
@@ -56,7 +51,11 @@ def _split_csv(value: str) -> list[str]:
 
 
 def _post(path: str, payload: dict[str, Any]) -> dict[str, Any]:
-    response = requests.post(f"{BACKEND_URL}{path}", json=payload, timeout=1200)
+    response = requests.post(
+        f"{BACKEND_URL}{path}",
+        json=payload,
+        timeout=BACKEND_CONFIG["request_timeout_seconds"],
+    )
     if not response.ok:
         try:
             detail = response.json().get("detail", response.text)
@@ -68,7 +67,9 @@ def _post(path: str, payload: dict[str, Any]) -> dict[str, Any]:
 
 def _database_status() -> bool:
     try:
-        response = requests.get(f"{BACKEND_URL}/health", timeout=10)
+        response = requests.get(
+            f"{BACKEND_URL}/health", timeout=BACKEND_CONFIG["health_timeout_seconds"]
+        )
         response.raise_for_status()
         return bool(response.json().get("database_configured"))
     except requests.RequestException:
@@ -100,57 +101,96 @@ with st.sidebar:
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             st.error(f"Invalid campaign file: {exc}")
 
-    campaign_name = st.text_input("Campaign name", value=loaded.get("campaign_name", "California Small Business Discovery"))
-    campaign_status = st.selectbox("Status", ["draft", "active", "paused", "completed"], index=1)
+    campaign_name = st.text_input(
+        "Campaign name", value=loaded.get("campaign_name", CAMPAIGN_CONFIG["default_name"])
+    )
+    statuses = CAMPAIGN_CONFIG["statuses"]
+    default_status = loaded.get("campaign_status", CAMPAIGN_CONFIG["default_status"])
+    status_index = statuses.index(default_status) if default_status in statuses else 0
+    campaign_status = st.selectbox("Status", statuses, index=status_index)
     date_col1, date_col2 = st.columns(2)
     period_start = date_col1.date_input("Start", value=date.fromisoformat(loaded.get("period_start", date.today().isoformat())))
     period_end = date_col2.date_input("End", value=date.fromisoformat(loaded.get("period_end", date.today().isoformat())))
 
     st.subheader("Dynamic geography")
-    country = st.selectbox("Country", ["United States", "Canada", "United Kingdom", "Australia", "Other"], index=0)
+    countries = GEOGRAPHY_CONFIG["countries"]
+    default_country = loaded.get("country", GEOGRAPHY_CONFIG["default_country"])
+    country_index = countries.index(default_country) if default_country in countries else 0
+    country = st.selectbox("Country", countries, index=country_index)
     if country == "United States":
-        default_state = loaded.get("state", "California")
-        state_index = US_STATES.index(default_state) if default_state in US_STATES else US_STATES.index("California")
-        state = st.selectbox("State", US_STATES, index=state_index)
+        us_states = GEOGRAPHY_CONFIG["us_states"]
+        default_state = loaded.get("state", GEOGRAPHY_CONFIG["default_state"])
+        fallback_state = GEOGRAPHY_CONFIG["default_state"]
+        state_index = us_states.index(default_state) if default_state in us_states else us_states.index(fallback_state)
+        state = st.selectbox("State", us_states, index=state_index)
     else:
         state = st.text_input("State / province / region", value=loaded.get("state", ""))
-    suggested_areas = STATE_AREAS.get(state, [])
+    suggested_areas = GEOGRAPHY_CONFIG["state_areas"].get(state, [])
     selected_areas = st.multiselect("Suggested counties or cities", suggested_areas)
     custom_areas = st.text_input("Additional cities, counties or ZIP codes", value=", ".join(loaded.get("cities_or_areas", [])), placeholder="Irvine, Tustin, 92780")
 
     st.subheader("Business targeting")
-    selected_industries = st.multiselect("Industries", INDUSTRY_SUGGESTIONS, default=loaded.get("industries", ["Restaurants", "Retail"]))
+    selected_industries = st.multiselect(
+        "Industries",
+        TARGETING_CONFIG["industry_suggestions"],
+        default=loaded.get("industries", TARGETING_CONFIG["default_industries"]),
+    )
     custom_industries = st.text_input("Additional industries", placeholder="Accountants, hotels, manufacturers")
     subcategories_text = st.text_input("Subcategories", value=", ".join(loaded.get("subcategories", [])), placeholder="Independent restaurants, specialty retailers")
-    selected_roles = st.multiselect("Decision-maker roles", ROLE_SUGGESTIONS, default=loaded.get("decision_maker_roles", ROLE_SUGGESTIONS[:4]))
+    selected_roles = st.multiselect(
+        "Decision-maker roles",
+        TARGETING_CONFIG["role_suggestions"],
+        default=loaded.get("decision_maker_roles", TARGETING_CONFIG["default_roles"]),
+    )
     custom_roles = st.text_input("Additional roles", placeholder="Managing Partner, Controller")
     inclusion_text = st.text_input("Include keywords", value=", ".join(loaded.get("inclusion_keywords", [])), placeholder="independent, locally owned")
     exclusion_text = st.text_input("Exclude keywords", value=", ".join(loaded.get("exclusion_keywords", [])), placeholder="permanently closed, franchise corporate office")
 
     st.subheader("Run controls")
-    pipeline_version = st.radio("Pipeline version", ["Version 1", "Version 2 preview"], horizontal=True)
-    is_v2 = pipeline_version == "Version 2 preview"
-    source_count = st.slider("Businesses to discover", 1, 500 if is_v2 else 100, 100 if is_v2 else 10)
-    lead_count = st.slider("Qualified leads to return", 1, 100, 10)
+    pipeline_versions = RUN_CONFIG["pipeline_versions"]
+    default_pipeline = RUN_CONFIG["default_pipeline_version"]
+    pipeline_index = pipeline_versions.index(default_pipeline)
+    pipeline_version = st.radio(
+        "Pipeline version", pipeline_versions, index=pipeline_index, horizontal=True
+    )
+    is_v2 = pipeline_version == RUN_CONFIG["v2_pipeline_version"]
+    source_control = RUN_CONFIG["source_count_v2" if is_v2 else "source_count_v1"]
+    lead_control = RUN_CONFIG["lead_count"]
+    source_count = st.slider(
+        "Businesses to discover",
+        source_control["min"], source_control["max"], source_control["default"],
+    )
+    lead_count = st.slider(
+        "Qualified leads to return",
+        lead_control["min"], lead_control["max"], lead_control["default"],
+    )
     if is_v2:
-        provider_labels = {
-            "Google Places": "google_places",
-            "Public web": "web_search",
-            "Yellow Pages": "yellow_pages",
-            "Chambers": "chambers",
-            "Sulekha": "sulekha",
-        }
+        provider_labels = RUN_CONFIG["provider_labels"]
         selected_provider_labels = st.multiselect(
             "Discovery providers",
             list(provider_labels),
-            default=["Google Places", "Public web", "Yellow Pages", "Chambers"],
+            default=RUN_CONFIG["default_providers"],
         )
-        oversampling_factor = st.slider("Candidate coverage", 1, 10, 3)
-        max_queries = st.slider("Maximum discovery queries", 1, 200, 40)
-        results_per_query = st.slider("Results per query", 1, 20, 10)
-        max_pages_per_query = st.slider("Pages per query", 1, 3, 2)
-        enrichment_batch_size = st.slider("Enrichment batch size", 1, 25, 10)
-    persist_to_database = st.checkbox("Push results to AWS PostgreSQL", value=True)
+        control_values = {}
+        for key, label in (
+            ("oversampling_factor", "Candidate coverage"),
+            ("max_queries", "Maximum discovery queries"),
+            ("results_per_query", "Results per query"),
+            ("max_pages_per_query", "Pages per query"),
+            ("enrichment_batch_size", "Enrichment batch size"),
+        ):
+            control = RUN_CONFIG[key]
+            control_values[key] = st.slider(
+                label, control["min"], control["max"], control["default"]
+            )
+        oversampling_factor = control_values["oversampling_factor"]
+        max_queries = control_values["max_queries"]
+        results_per_query = control_values["results_per_query"]
+        max_pages_per_query = control_values["max_pages_per_query"]
+        enrichment_batch_size = control_values["enrichment_batch_size"]
+    persist_to_database = st.checkbox(
+        "Push results to AWS PostgreSQL", value=RUN_CONFIG["persist_to_database"]
+    )
 
 areas = list(dict.fromkeys(selected_areas + _split_csv(custom_areas)))
 industries = list(dict.fromkeys(selected_industries + _split_csv(custom_industries)))

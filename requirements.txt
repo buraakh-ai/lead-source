@@ -23,6 +23,7 @@ playwright
 
 # Frontend
 streamlit
+boto3
 
 # Optional central AWS PostgreSQL persistence
 psycopg[binary]

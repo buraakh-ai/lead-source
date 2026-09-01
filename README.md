@@ -167,6 +167,25 @@ streamlit run frontend/streamlit_app.py
 python main.py https://example.com --sources 3 --leads 3
 ```
 
+### Streamlit configuration
+
+Non-secret frontend options and defaults live in
+[`frontend/streamlit_config.json`](frontend/streamlit_config.json). To use a
+different local file, set `STREAMLIT_CONFIG_FILE` to its path.
+
+For AWS, upload the same JSON structure to an S3 folder and configure the
+frontend service with:
+
+```env
+STREAMLIT_CONFIG_S3_URI=s3://YOUR_BUCKET/YOUR_FOLDER/streamlit_config.json
+```
+
+The frontend workload role needs `s3:GetObject` only for that object. If the S3
+object is missing, inaccessible, malformed, or fails validation, the application
+shows a warning and uses the bundled defaults. `BACKEND_URL` remains an
+environment variable, and credentials or database connection strings must not
+be stored in this JSON file.
+
 ## Running with Docker
 
 ```bash

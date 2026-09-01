@@ -17,6 +17,8 @@ services:
       - "8501:8501"
     environment:
       BACKEND_URL: http://backend:8000
+      # Optional: s3://bucket/folder/streamlit_config.json
+      STREAMLIT_CONFIG_S3_URI: ${STREAMLIT_CONFIG_S3_URI:-}
     depends_on:
       - backend
     restart: unless-stopped
