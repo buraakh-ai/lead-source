@@ -6,6 +6,15 @@ city/area, industry and decision-maker role. Coordinated agents discover public
 business sources, enrich and qualify records, and optionally persist them to a
 central AWS PostgreSQL database for the downstream Ad Generator module.
 
+## Documentation
+
+- [Solution Design](docs/SOLUTION_DESIGN.md) — complete product scope,
+  features, workflows, components, data, APIs, security, and limitations.
+- [Architecture](docs/ARCHITECTURE.md) — system, component, sequence, data, and
+  AWS reference diagrams.
+- [Product and Operations Guide](docs/PRODUCT_OPERATIONS_GUIDE.md) — setup,
+  configuration, usage, deployment, testing, and troubleshooting.
+
 The pipeline runs as three sequential agents (Business Research → Lead Source
 Research → Lead Puller), orchestrated with Agno's native `Workflow`/`Step`
 primitives, exposed over a FastAPI backend, and driven by a Streamlit
@@ -22,8 +31,7 @@ later without restructuring.
 - Deduplicates by official domain, then phone, then normalized business name and city.
 - Displays campaign metrics and exports a UTF-8 CSV from the Streamlit interface.
 - Saves and reloads reusable campaign definitions as JSON.
-- Optionally persists campaigns, runs, sources and leads to AWS PostgreSQL.
-- Exposes `ad_generator_leads_v` as the downstream handoff view for verified/enriched leads.
+- Optionally persists companies, leads, and social profiles to AWS PostgreSQL.
 - Does not infer wealth or other sensitive personal traits and does not bypass Yelp or LinkedIn access controls.
 
 ## Architecture
@@ -194,7 +202,9 @@ docker compose up --build
 
 This starts the backend on `http://localhost:8000` and the Streamlit frontend
 on `http://localhost:8501`, wired together automatically. Only the backend
-reads the root `.env` file; the frontend receives only `BACKEND_URL`.
+reads the root `.env` file; the frontend receives `BACKEND_URL` and the optional
+non-secret `STREAMLIT_CONFIG_S3_URI`, with AWS credentials supplied by its
+workload role when S3 is enabled.
 
 ### Run the backend container by itself
 
@@ -213,8 +223,9 @@ docker compose up backend
 
 Verify it at `http://localhost:8000/health`, then open
 `http://localhost:8000/docs` and execute `POST /run-sourcing-campaign`.
-For the first AWS/container test set `persist_to_database` to `false`. The API
-response is returned to the caller and, while `LOG_SOURCING_DETAILS=true`, each
+For a discovery-only smoke test, set `persist_to_database` to `false`. For the
+database integration test, leave its default `true`. The API response is
+returned to the caller and, while `LOG_SOURCING_DETAILS=true`, each
 source and lead is also emitted as structured JSON to stdout. Docker displays
 that output directly; Amazon ECS sends it to CloudWatch when the task uses the
 `awslogs` log driver.

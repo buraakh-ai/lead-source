@@ -1,7 +1,7 @@
 # Version 2: Multi-Source Discovery Preview
 
-Version 2 is isolated on the `feature/v2-multi-source-discovery` branch for
-client review. Version 1 remains on `main` for AWS connectivity and RDS testing.
+Version 2 is available on `main` alongside Version 1. Operators can select the
+pipeline version in Streamlit or call the V2 endpoint directly.
 
 ## Objective
 
@@ -102,4 +102,4 @@ Use `max_queries`, `results_per_query`, `max_pages_per_query`, and
 3. Measure cost and duration for 25, 50, and 100 qualified-lead targets.
 4. Review contact-data retention, logging, and deletion requirements.
 5. Approve the V2 funnel metrics and UI.
-6. Merge V2 only after AWS/RDS testing on Version 1 is complete.
+6. Promote V2 usage after representative AWS/RDS, quality, and cost testing.

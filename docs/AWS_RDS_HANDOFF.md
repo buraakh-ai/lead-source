@@ -83,20 +83,13 @@ The property appears inside `run_summary`. Verify persisted qualified leads
 with a PostgreSQL client:
 
 ```sql
-SELECT lead_record_id, business_name, business_email, lead_score, created_at
-FROM ad_generator_leads_v
+SELECT lead_id, full_name, email, lead_score, created_at
+FROM leadsource.leads
 ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-The initializer creates or upgrades these application objects:
-
-- `lead_sourcing_campaigns`
-- `lead_sourcing_runs`
-- `lead_sourcing_sources`
-- `lead_sourcing_leads`
-- `ad_generator_leads_v`
-
-Do not use `--with-sample-data` in production. Remove any temporary workstation
-security-group rule after the test. Retain only the backend security group's
-access to RDS.
+The application also writes related records to `leadsource.companies` and
+`leadsource.social_profiles`. It performs no DDL. Remove any temporary
+workstation security-group rule after the test and retain only the backend
+security group's access to RDS.
