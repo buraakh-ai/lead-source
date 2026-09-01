@@ -59,7 +59,6 @@ class Settings(BaseSettings):
     # Example only: postgresql://user:password@host:5432/database?sslmode=require
     # Keep the real value in .env or an AWS secret, never in source control.
     AWS_POSTGRES_DSN: Optional[str] = None
-    DATABASE_AUTO_CREATE_TABLES: bool = True
 
     # --- Debugging ---------------------------------------------------------------
     DEBUG_MODE: bool = False

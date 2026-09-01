@@ -112,16 +112,14 @@ sequential `Step`s, giving a single-call entry point used by the CLI, the
 4. (Optional) configure AWS PostgreSQL in `.env`:
 
    ```env
-   AWS_POSTGRES_DSN=postgresql://user:password@your-rds-host:5432/database?sslmode=require
-   DATABASE_AUTO_CREATE_TABLES=true
+   AWS_POSTGRES_DSN=postgresql://buraq_ai:password@your-rds-host:5432/crmdb?sslmode=require
    ```
 
    Keep the real credential only in `.env` or AWS Secrets Manager. The backend
-   creates `lead_sourcing_campaigns`, `lead_sourcing_runs`,
-   `lead_sourcing_sources`, `lead_sourcing_leads`, and the downstream
-   `ad_generator_leads_v` view when auto-create is enabled.
+   writes to the pre-provisioned `leadsource.companies`, `leadsource.leads`, and
+   `leadsource.social_profiles` tables and does not execute DDL.
 
-### Create the AWS RDS PostgreSQL lead database
+### Configure the AWS RDS PostgreSQL lead database
 
 For the complete team handoff procedure, including AWS Console, networking,
 local initialization, and verification steps, see
@@ -131,43 +129,27 @@ The client-review preview for deterministic, multi-source discovery is
 documented separately in
 [`docs/V2_MULTI_SOURCE_DISCOVERY.md`](docs/V2_MULTI_SOURCE_DISCOVERY.md).
 
-1. In AWS RDS, create a PostgreSQL instance and an initial database (for
-   example, `lead_generation`). Allow inbound TCP 5432 only from the backend's
-   security group or your temporary administration IP; do not expose it to the
-   whole internet.
+1. Use the provisioned `crmdb` database and `leadsource` schema. Allow inbound
+   TCP 5432 only from the backend's security group or a temporary administration
+   IP; do not expose it to the whole internet.
 2. Put the connection string in `.env` locally. In ECS/Lambda, store it in AWS
    Secrets Manager and inject it as `AWS_POSTGRES_DSN`:
 
    ```env
-   AWS_POSTGRES_DSN=postgresql://app_user:URL_ENCODED_PASSWORD@your-instance.region.rds.amazonaws.com:5432/lead_generation?sslmode=require
+   AWS_POSTGRES_DSN=postgresql://buraq_ai:URL_ENCODED_PASSWORD@your-instance.region.rds.amazonaws.com:5432/crmdb?sslmode=require
    ```
 
-3. Create/upgrade the tables and view from the checked-in template:
+3. Grant the application user only `CONNECT`, `SELECT`, `INSERT`, and `UPDATE`
+   on the three existing tables. No `CREATE` or `DELETE` permission is required.
 
-   ```bash
-   python scripts/init_database.py
-   ```
-
-   For a disposable environment, add one clearly marked example lead:
-
-   ```bash
-   python scripts/init_database.py --with-sample-data
-   ```
-
-   The raw templates are [`sql/001_create_lead_database.sql`](sql/001_create_lead_database.sql)
-   and [`sql/002_sample_data.sql`](sql/002_sample_data.sql), so they may also be
-   applied with `psql`. Do not load the sample file in production.
-
-4. Run a campaign with `persist_to_database: true`. The backend writes the
-   campaign, run, discovered sources, and AI-generated leads in one transaction.
-   Downstream ad generation should read verified/enriched records from
-   `ad_generator_leads_v`.
+4. Run a campaign with `persist_to_database: true`. The backend writes companies,
+   leads, and social profiles in one transaction.
 
 To verify the handoff with `psql`:
 
 ```sql
-SELECT lead_record_id, business_name, business_email, lead_score
-FROM ad_generator_leads_v
+SELECT lead_id, full_name, email, lead_score
+FROM leadsource.leads
 ORDER BY created_at DESC
 LIMIT 20;
 ```
