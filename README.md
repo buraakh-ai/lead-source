@@ -14,6 +14,8 @@ central AWS PostgreSQL database for the downstream Ad Generator module.
   AWS reference diagrams.
 - [Product and Operations Guide](docs/PRODUCT_OPERATIONS_GUIDE.md) — setup,
   configuration, usage, deployment, testing, and troubleshooting.
+- [Project Change Tracker](docs/CHANGELOG.md) — chronological updates,
+  deployment actions, open items, and the template for future changes.
 
 The pipeline runs as three sequential agents (Business Research → Lead Source
 Research → Lead Puller), orchestrated with Agno's native `Workflow`/`Step`
