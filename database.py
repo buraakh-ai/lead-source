@@ -249,6 +249,15 @@ def persist_sourcing_run(
 
     import psycopg
 
+    if settings.AWS_OUTPUT_CONFIG_FILE:
+        from shared_output import load_output_config, persist_shared_output
+
+        return persist_shared_output(
+            settings.AWS_POSTGRES_DSN,
+            load_output_config(settings.AWS_OUTPUT_CONFIG_FILE),
+            campaign, leads, summary,
+        )
+
     company_ids: dict[tuple[str, Optional[str], Optional[str]], int] = {}
     with psycopg.connect(settings.AWS_POSTGRES_DSN) as connection:
         with connection.cursor() as cursor:

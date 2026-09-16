@@ -1,0 +1,8 @@
+{
+  "schema_name": "public",
+  "table_name": "leads",
+  "source_name": "leadsource",
+  "source_type": "web_scraping",
+  "business_source_id": "lead:0",
+  "individual_source_id": "lead:1"
+}

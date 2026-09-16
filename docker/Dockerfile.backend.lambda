@@ -39,7 +39,7 @@ COPY prompts /app/prompts
 COPY skills /app/skills
 COPY tools /app/tools
 
-COPY database.py lead_quality.py schemas.py /app/
+COPY database.py shared_output.py lead_quality.py schemas.py /app/
 
 EXPOSE 8080
 
